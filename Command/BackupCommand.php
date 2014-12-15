@@ -7,8 +7,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class GreetCommand extends ContainerAwareCommand
-{
+/**
+ * Class BackupCommand
+ */
+class BackupCommand extends ContainerAwareCommand {
+
+    /**
+     * Command configuration
+     *
+     * @return void
+     */
     protected function configure() {
         $this
             ->setName('aoedeployment:createbackup')
@@ -19,7 +27,15 @@ class GreetCommand extends ContainerAwareCommand
         ;
     }
 
+
+    /**
+     * excecutes the console command
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     */
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $output->writeln($text);
+        $output->writeln("dummy");
     }
 }
