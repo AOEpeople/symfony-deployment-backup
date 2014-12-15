@@ -1,0 +1,28 @@
+{
+    "name" : "aoe/deployment-systemstoragebackup",
+    "description" : "app/console commands for creating and applying SQL as well as FileSystem backaups",
+    "type" : "symfony-bundle",
+    "authors" : [{
+        "name" : "AOE GmbH",
+        "email" : "team-fraport-portal@aoe.com"
+    }],
+    "keywords" : [
+        "deployment", "backup", "console"
+    ],
+    "license" : [
+        "MIT"
+    ],
+    "require" : {
+    },
+    "autoload" : {
+        "psr-0" : {
+            "Aoe\\Deployment\\SystemStorageBackupBundle" : ""
+        }
+    },
+    "target-dir" : "Aoe/Deployment/SystemStorageBackupBundle",
+    "repositories" : [{
+    }],
+    "extra" : {
+    }
+}
+
