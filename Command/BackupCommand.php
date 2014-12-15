@@ -22,8 +22,8 @@ class BackupCommand extends ContainerAwareCommand {
             ->setName('aoedeployment:createbackup')
             ->setDescription('Creates SQL/ZIP files as backup')
             ->addArgument('targetDirectory', InputArgument::REQUIRED, 'The directory where the backup-data should be placed in.')
-            ->addOption('backupSQL', TRUE, InputOption::VALUE_NONE, 'Create SQL backup.')
-            ->addOption('backupAssets', TRUE, InputOption::VALUE_NONE, 'Create Assets backup.')
+            ->addOption('backupSQL', NULL, InputOption::VALUE_NONE, 'Create SQL backup.')
+            ->addOption('backupAssets', NULL, InputOption::VALUE_NONE, 'Create Assets backup.')
         ;
     }
 
