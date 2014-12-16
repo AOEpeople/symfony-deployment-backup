@@ -1,7 +1,6 @@
 <?php
 namespace Aoe\Deployment\SystemStorageBackupBundle\Command;
 
-use Akeneo\Bundle\BatchBundle\Job\RuntimeErrorException;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,20 +23,20 @@ class BackupCommand extends ContainerAwareCommand {
             ->setName('aoedeployment:createbackup')
             ->setDescription('Creates SQL/ZIP files as backup')
             ->addArgument('targetDirectory', InputArgument::REQUIRED, 'The directory where the backup-data should be placed in.')
-            ->addArgument('backupAssets', InputArgument::OPTIONAL, 'Comma separated list of backup asset directories.')
             ->addOption('backupSQL', NULL, InputOption::VALUE_NONE, 'Create SQL backup.')
             ->addOption('backupAssets', NULL, InputOption::VALUE_NONE, 'Create Assets backup.')
+            ->addOption('assetSources', NULL, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
         ;
     }
 
 
     /**
-     * excecutes the console command
+     * execute the console command
      *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return void
-     * @throws RuntimeErrorException
+     * @throws \RuntimeException
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
         if ($input->getOption('backupSQL')) {
@@ -50,12 +49,12 @@ class BackupCommand extends ContainerAwareCommand {
     }
 
     /**
-     * creates the sql backup
+     * create the sql backup
      *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return void
-     * @throws RuntimeErrorException
+     * @throws \RuntimeException
      */
     protected function createSQLBackup(InputInterface $input, OutputInterface $output) {
         $targetDirectory = $input->getArgument('targetDirectory');
@@ -71,7 +70,7 @@ class BackupCommand extends ContainerAwareCommand {
         $process->run();
 
         if (!$process->isSuccessful()) {
-            throw new RuntimeErrorException($process->getErrorOutput());
+            throw new \RuntimeException($process->getErrorOutput());
         }
 
         $translator = $this->getContainer()->get('translator');
@@ -79,28 +78,29 @@ class BackupCommand extends ContainerAwareCommand {
     }
 
     /**
-     * creates the assets backups
+     * create the assets backups
      *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return void
+     * @throws \RuntimeException
      */
     protected function createAssetsBackup(InputInterface $input, OutputInterface $output) {
         $targetDirectory = $input->getArgument('targetDirectory');
         $outputFile = $targetDirectory . '/assets.tar.gz';
-        $backupAssets = trim(str_replace(',', ' ', $input->getArgument('backupAssets')));
+        $assetSources = trim(str_replace(',', ' ', $input->getOption('assetSources')));
 
-        if (!$backupAssets) {
-            throw new RuntimeErrorException('backup assets folders missing');
+        if (!$assetSources) {
+            $assetSources = '*';
         }
 
         $command = sprintf('tar czf %s %s',
-            $outputFile, $backupAssets);
+            $outputFile, $assetSources);
         $process = new Process($command);
         $process->run();
 
         if (!$process->isSuccessful()) {
-            throw new RuntimeErrorException($process->getErrorOutput());
+            throw new \RuntimeException($process->getErrorOutput());
         }
 
         $translator = $this->getContainer()->get('translator');
