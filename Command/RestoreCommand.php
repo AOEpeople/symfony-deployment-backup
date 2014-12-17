@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Translation\Translator;
 
@@ -40,11 +41,11 @@ class RestoreCommand extends ContainerAwareCommand {
      * @throws \RuntimeException
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
-        if ($input->hasOption('restoreSQL')) {
+        if ($input->getOption('restoreSQL')) {
             $this->restoreSQLBackup($input, $output);
         }
 
-        if ($input->hasOption('restoreAssets')) {
+        if ($input->getOption('restoreAssets')) {
             $this->restoreAssetsBackup($input, $output);
         }
     }
@@ -60,6 +61,8 @@ class RestoreCommand extends ContainerAwareCommand {
     protected function restoreSQLBackup(InputInterface $input, OutputInterface $output) {
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . '/database.sql.gz';
+        $this->checkBackupFile($backupFile);
+
         $dbHost = $this->getContainer()->getParameter('database_host');
         $dbName = $this->getContainer()->getParameter('database_name');
         $dbUser = $this->getContainer()->getParameter('database_user');
@@ -79,7 +82,7 @@ class RestoreCommand extends ContainerAwareCommand {
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans(
             'sql backup restored from %backupFile%',
-            array('%backupFile' => $backupFile)));
+            array('%backupFile%' => $backupFile)));
     }
 
     /**
@@ -93,9 +96,9 @@ class RestoreCommand extends ContainerAwareCommand {
     protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . '/assets.tar.gz';
+        $this->checkBackupFile($backupFile);
 
         $command = sprintf('tar -xzf %f', $backupFile);
-
         $process = new Process($command);
         $process->run();
 
@@ -103,11 +106,31 @@ class RestoreCommand extends ContainerAwareCommand {
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        /* @var $translator Translator*/
+        /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans(
             'assets backup restored from %backupFile%',
-            array('$backupFile' => $backupFile)));
+            array('$backupFile%' => $backupFile)));
+    }
+
+    /**
+     * Check if $backupFile exists
+     *
+     * @param $backupFile string
+     * @throws \RuntimeException
+     */
+    protected function checkBackupFile($backupFile) {
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+
+        $fileSystem = new Filesystem();
+        if (!$fileSystem->exists($backupFile)) {
+            throw new \RuntimeException(
+                $translator->trans(
+                    'backup file %backupFile% does not exist',
+                    array('$backupFile%' => $backupFile)));
+        }
+
     }
 
 }
