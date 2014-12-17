@@ -110,7 +110,7 @@ class RestoreCommand extends ContainerAwareCommand {
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans(
             'assets backup restored from %backupFile%',
-            array('$backupFile%' => $backupFile)));
+            array('%backupFile%' => $backupFile)));
     }
 
     /**
@@ -128,7 +128,7 @@ class RestoreCommand extends ContainerAwareCommand {
             throw new \RuntimeException(
                 $translator->trans(
                     'backup file %backupFile% does not exist',
-                    array('$backupFile%' => $backupFile)));
+                    array('%backupFile%' => $backupFile)));
         }
 
     }

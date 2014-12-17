@@ -131,7 +131,7 @@ class BackupCommand extends ContainerAwareCommand {
                 $translator->trans(
                     'target directory %targetDirectory% does not exist.',
                     array(
-                        '%targetDirectory' => $targetDirectory
+                        '%targetDirectory%' => $targetDirectory
                     )
                 ));
         }
