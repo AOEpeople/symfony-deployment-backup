@@ -94,7 +94,7 @@ class BackupCommand extends ContainerAwareCommand {
             $assetSources = '*';
         }
 
-        $command = sprintf('tar czf %s %s',
+        $command = sprintf('tar -czf %s %s',
             $outputFile, $assetSources);
         $process = new Process($command);
         $process->run();
