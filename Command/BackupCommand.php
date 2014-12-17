@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Translation\Translator;
 
@@ -59,6 +60,8 @@ class BackupCommand extends ContainerAwareCommand {
      */
     protected function createSQLBackup(InputInterface $input, OutputInterface $output) {
         $targetDirectory = $input->getArgument('targetDirectory');
+        $this->checkTargetDirectory($targetDirectory);
+
         $outputFile = $targetDirectory . '/database.sql.gz';
         $dbHost = $this->getContainer()->getParameter('database_host');
         $dbName = $this->getContainer()->getParameter('database_name');
@@ -89,6 +92,8 @@ class BackupCommand extends ContainerAwareCommand {
      */
     protected function createAssetsBackup(InputInterface $input, OutputInterface $output) {
         $targetDirectory = $input->getArgument('targetDirectory');
+        $this->checkTargetDirectory($targetDirectory);
+
         $outputFile = $targetDirectory . '/assets.tar.gz';
         $assetSources = trim(str_replace(',', ' ', $input->getOption('assetSources')));
 
@@ -108,6 +113,28 @@ class BackupCommand extends ContainerAwareCommand {
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans('asset backup created: %outputFile%', array('%outputFile%' => $outputFile)));
+    }
+
+    /**
+     * Check if $targetDirectory exists
+     *
+     * @param string $targetDirectory
+     * @throws \RuntimeException
+     */
+    protected function checkTargetDirectory($targetDirectory) {
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+
+        $fileSystem = new Filesystem();
+        if (!$fileSystem->exists($targetDirectory)) {
+            throw new \RuntimeException(
+                $translator->trans(
+                    'target directory %targetDirectory% does not exist.',
+                    array(
+                        '%targetDirectory' => $targetDirectory
+                    )
+                ));
+        }
     }
 
 }
