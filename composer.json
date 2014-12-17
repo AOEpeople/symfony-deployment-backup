@@ -3,8 +3,7 @@
     "description" : "app/console commands for creating and applying SQL as well as FileSystem backaups",
     "type" : "symfony-bundle",
     "authors" : [{
-        "name" : "AOE GmbH",
-        "email" : "team-fraport-portal@aoe.com"
+        "name" : "AOE GmbH"
     }],
     "keywords" : [
         "deployment", "backup", "console"
