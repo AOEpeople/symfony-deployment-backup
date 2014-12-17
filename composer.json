@@ -1,6 +1,6 @@
 {
     "name" : "aoe/deployment-systemstoragebackup",
-    "description" : "app/console commands for creating and applying SQL as well as FileSystem backaups",
+    "description" : "app/console commands for creating and applying SQL as well as FileSystem backups",
     "type" : "symfony-bundle",
     "authors" : [{
         "name" : "AOE GmbH"

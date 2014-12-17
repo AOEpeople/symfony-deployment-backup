@@ -1,0 +1,113 @@
+<?php
+namespace Aoe\Deployment\SystemStorageBackupBundle\Command;
+
+
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Translation\Translator;
+
+/**
+ * Class RestoreCommand
+ * @package Aoe\Deployment\SystemStorageBackupBundle\Command
+ */
+class RestoreCommand extends ContainerAwareCommand {
+
+    /**
+     * Command configuration
+     *
+     * @return void
+     */
+    protected function configure() {
+        $this
+            ->setName('aoedeployment:restorebackup')
+            ->setDescription('Restores SQL/ZIP backup files to database and asset folders.')
+            ->addArgument('backupDirectory', InputArgument::REQUIRED, 'The directory of the backup files.')
+            ->addOption('restoreSQL', NULL, InputOption::VALUE_NONE, 'Restore SQL backup file to database.')
+            ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
+        ;
+    }
+
+    /**
+     * Execute the console command
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     * @throws \RuntimeException
+     */
+    protected function execute(InputInterface $input, OutputInterface $output) {
+        if ($input->hasOption('restoreSQL')) {
+            $this->restoreSQLBackup($input, $output);
+        }
+
+        if ($input->hasOption('restoreAssets')) {
+            $this->restoreAssetsBackup($input, $output);
+        }
+    }
+
+    /**
+     * Restore sql backup to database
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     * @throws \RuntimeException
+     */
+    protected function restoreSQLBackup(InputInterface $input, OutputInterface $output) {
+        $backupDirectory = $input->getArgument('backupDirectory');
+        $backupFile = $backupDirectory . '/database.sql.gz';
+        $dbHost = $this->getContainer()->getParameter('database_host');
+        $dbName = $this->getContainer()->getParameter('database_name');
+        $dbUser = $this->getContainer()->getParameter('database_user');
+        $dbPassword = $this->getContainer()->getParameter('database_password');
+
+        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p%s %s',
+            $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
+
+        $process = new Process($command);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new \RuntimeException($process->getErrorOutput());
+        }
+
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+        $output->writeln($translator->trans(
+            'sql backup restored from %backupFile%',
+            array('%backupFile' => $backupFile)));
+    }
+
+    /**
+     * Restore assets backup to target folder
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     * @throws \RuntimeException
+     */
+    protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
+        $backupDirectory = $input->getArgument('backupDirectory');
+        $backupFile = $backupDirectory . '/assets.tar.gz';
+
+        $command = sprintf('tar -xzf %f', $backupFile);
+
+        $process = new Process($command);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new \RuntimeException($process->getErrorOutput());
+        }
+
+        /* @var $translator Translator*/
+        $translator = $this->getContainer()->get('translator');
+        $output->writeln($translator->trans(
+            'assets backup restored from %backupFile%',
+            array('$backupFile' => $backupFile)));
+    }
+
+}
