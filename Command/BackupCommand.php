@@ -31,7 +31,7 @@ class BackupCommand extends ContainerAwareCommand {
 
 
     /**
-     * execute the console command
+     * Execute the console command
      *
      * @param InputInterface $input
      * @param OutputInterface $output
@@ -49,7 +49,7 @@ class BackupCommand extends ContainerAwareCommand {
     }
 
     /**
-     * create the sql backup
+     * Create the sql backup
      *
      * @param InputInterface $input
      * @param OutputInterface $output
@@ -78,7 +78,7 @@ class BackupCommand extends ContainerAwareCommand {
     }
 
     /**
-     * create the assets backups
+     * Create the assets backups
      *
      * @param InputInterface $input
      * @param OutputInterface $output
