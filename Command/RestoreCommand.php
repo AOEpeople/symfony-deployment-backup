@@ -70,7 +70,7 @@ class RestoreCommand extends ContainerAwareCommand {
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
-        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p%s %s',
+        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
             $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
 
         $process = new Process($command);

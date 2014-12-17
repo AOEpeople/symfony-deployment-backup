@@ -70,7 +70,7 @@ class BackupCommand extends ContainerAwareCommand {
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
-        $command = sprintf('mysqldump -h %s -u %s -p%s %s | gzip - > %s',
+        $command = sprintf('mysqldump -h %s -u %s -p\'%s\' %s | gzip - > %s',
             $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
         $process = new Process($command);
         $process->run();
