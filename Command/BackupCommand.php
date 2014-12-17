@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Translation\Translator;
 
 /**
  * Class BackupCommand
@@ -73,6 +74,7 @@ class BackupCommand extends ContainerAwareCommand {
             throw new \RuntimeException($process->getErrorOutput());
         }
 
+        /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans('sql backup created: %outputFile%', array('%outputFile%' => $outputFile)));
     }
@@ -103,6 +105,7 @@ class BackupCommand extends ContainerAwareCommand {
             throw new \RuntimeException($process->getErrorOutput());
         }
 
+        /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans('asset backup created: %outputFile%', array('%outputFile%' => $outputFile)));
     }
