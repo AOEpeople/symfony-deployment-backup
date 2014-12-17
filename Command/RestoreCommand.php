@@ -28,9 +28,9 @@ class RestoreCommand extends ContainerAwareCommand {
             ->setDescription('Restores SQL/ZIP backup files to database and asset folders.')
             ->addArgument('backupDirectory', InputArgument::REQUIRED, 'The directory of the backup files.')
             ->addOption('restoreSQL', NULL, InputOption::VALUE_NONE, 'Restore SQL backup file to database.')
-            ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_REQUIRED, 'SQL backup filename.', 'database.sql.gz')
+            ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
-            ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_REQUIRED, 'Assets backup filename.', 'assets.tar.gz')
+            ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
         ;
     }
 
@@ -62,7 +62,7 @@ class RestoreCommand extends ContainerAwareCommand {
      */
     protected function restoreSQLBackup(InputInterface $input, OutputInterface $output) {
         $backupDirectory = $input->getArgument('backupDirectory');
-        $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getArgument('restoreSQLFilename');
+        $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreSQLFilename');
         $this->checkBackupFile($backupFile);
 
         $dbHost = $this->getContainer()->getParameter('database_host');
@@ -97,7 +97,7 @@ class RestoreCommand extends ContainerAwareCommand {
      */
     protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
         $backupDirectory = $input->getArgument('backupDirectory');
-        $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getArgument('restoreAssetsFilename');
+        $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreAssetsFilename');
         $this->checkBackupFile($backupFile);
 
         $command = sprintf('tar -xzf %f', $backupFile);
