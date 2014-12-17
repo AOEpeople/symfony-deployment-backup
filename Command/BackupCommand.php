@@ -26,7 +26,9 @@ class BackupCommand extends ContainerAwareCommand {
             ->setDescription('Creates SQL/ZIP files as backup')
             ->addArgument('targetDirectory', InputArgument::REQUIRED, 'The directory where the backup-data should be placed in.')
             ->addOption('backupSQL', NULL, InputOption::VALUE_NONE, 'Create SQL backup.')
+            ->addOption('backupSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('backupAssets', NULL, InputOption::VALUE_NONE, 'Create Assets backup.')
+            ->addOption('backupAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
             ->addOption('assetSources', NULL, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
         ;
     }
@@ -62,7 +64,7 @@ class BackupCommand extends ContainerAwareCommand {
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
 
-        $outputFile = $targetDirectory . '/database.sql.gz';
+        $outputFile = $targetDirectory . DIRECTORY_SEPARATOR . $input->getArgument('backupSQLFilename');
         $dbHost = $this->getContainer()->getParameter('database_host');
         $dbName = $this->getContainer()->getParameter('database_name');
         $dbUser = $this->getContainer()->getParameter('database_user');
@@ -94,7 +96,7 @@ class BackupCommand extends ContainerAwareCommand {
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
 
-        $outputFile = $targetDirectory . '/assets.tar.gz';
+        $outputFile = $targetDirectory . DIRECTORY_SEPARATOR . $input->getArgument('backupAssetsFilename');
         $assetSources = trim(str_replace(',', ' ', $input->getOption('assetSources')));
 
         if (!$assetSources) {
