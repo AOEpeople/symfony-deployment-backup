@@ -77,7 +77,7 @@ class BackupCommand extends ContainerAwareCommand {
             $options[] = '--add-drop-database';
         }
 
-        $command = sprintf('mysqldump $% -h %s -u %s -p\'%s\' %s | gzip - > %s',
+        $command = sprintf('mysqldump %s -h %s -u %s -p\'%s\' %s | gzip - > %s',
             implode(' ', $options), $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
         $process = new Process($command);
         $process->run();
