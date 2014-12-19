@@ -27,7 +27,6 @@ class BackupCommand extends ContainerAwareCommand {
             ->addArgument('targetDirectory', InputArgument::REQUIRED, 'The directory where the backup-data should be placed in.')
             ->addOption('backupSQL', NULL, InputOption::VALUE_NONE, 'Create SQL backup.')
             ->addOption('backupSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
-            ->addOption('backupSQLAddDropDatabase', NULL, InputOption::VALUE_NONE, 'Add --drop-database to mysqldump.')
             ->addOption('backupAssets', NULL, InputOption::VALUE_NONE, 'Create Assets backup.')
             ->addOption('backupAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
             ->addOption('assetSources', NULL, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
@@ -74,14 +73,8 @@ class BackupCommand extends ContainerAwareCommand {
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
-        // additional mysqldump parameters by command options
-        $options = array();
-        if ($input->getOption('backupSQLAddDropDatabase')) {
-            $options[] = '--add-drop-database';
-        }
-
-        $command = sprintf('mysqldump %s -h %s -u %s -p\'%s\' %s | gzip - > %s',
-            implode(' ', $options), $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
+        $command = sprintf('mysqldump -h %s -u %s -p\'%s\' %s | gzip - > %s',
+            $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 

@@ -28,6 +28,7 @@ class RestoreCommand extends ContainerAwareCommand {
             ->setDescription('Restores SQL/ZIP backup files to database and asset folders.')
             ->addArgument('backupDirectory', InputArgument::REQUIRED, 'The directory of the backup files.')
             ->addOption('restoreSQL', NULL, InputOption::VALUE_NONE, 'Restore SQL backup file to database.')
+            ->addOption('restoreSQLDropAndCreate', NULL, InputOption::VALUE_NONE, 'Perform Drop and Create on Database before Restore is performed.')
             ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
             ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
@@ -69,6 +70,15 @@ class RestoreCommand extends ContainerAwareCommand {
         $dbName = $this->getContainer()->getParameter('database_name');
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
+
+        $command='';
+        if ($input->getOption('restoreSQLDropAndCreate')) {
+            $command = sprintf('mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"',
+                $dbHost, $dbUser, $dbPassword, $dbName, $dbName);
+        }
+
+        $process = new Process($command);
+        $process->run();
 
         $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
             $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
