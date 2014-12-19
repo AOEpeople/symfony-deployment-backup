@@ -62,6 +62,9 @@ class BackupCommand extends ContainerAwareCommand {
      * @throws \RuntimeException
      */
     protected function createSQLBackup(InputInterface $input, OutputInterface $output) {
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
 
@@ -89,8 +92,6 @@ class BackupCommand extends ContainerAwareCommand {
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans('sql backup created: %outputFile%', array('%outputFile%' => $outputFile)));
     }
 
@@ -103,6 +104,9 @@ class BackupCommand extends ContainerAwareCommand {
      * @throws \RuntimeException
      */
     protected function createAssetsBackup(InputInterface $input, OutputInterface $output) {
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
 
@@ -125,8 +129,6 @@ class BackupCommand extends ContainerAwareCommand {
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
         $output->writeln($translator->trans('asset backup created: %outputFile%', array('%outputFile%' => $outputFile)));
     }
 
