@@ -79,10 +79,10 @@ class BackupCommand extends ContainerAwareCommand {
 
         $command = sprintf('mysqldump %s -h %s -u %s -p\'%s\' %s | gzip - > %s',
             implode(' ', $options), $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
-        
-		$output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
-        
-		$process = new Process($command);
+
+        $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
+
+        $process = new Process($command);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -116,7 +116,7 @@ class BackupCommand extends ContainerAwareCommand {
         $command = sprintf('tar -czf %s %s',
             $outputFile, $assetSources);
 
-		$output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
+        $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
         $process = new Process($command);
         $process->run();
