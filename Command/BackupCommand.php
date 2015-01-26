@@ -13,7 +13,8 @@ use Symfony\Component\Translation\Translator;
 /**
  * Class BackupCommand
  */
-class BackupCommand extends ContainerAwareCommand {
+class BackupCommand extends ContainerAwareCommand
+{
 
     /**
      * Command configuration
@@ -25,11 +26,11 @@ class BackupCommand extends ContainerAwareCommand {
             ->setName('aoedeployment:createbackup')
             ->setDescription('Creates SQL/ZIP files as backup')
             ->addArgument('targetDirectory', InputArgument::REQUIRED, 'The directory where the backup-data should be placed in.')
-            ->addOption('backupSQL', NULL, InputOption::VALUE_NONE, 'Create SQL backup.')
-            ->addOption('backupSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
-            ->addOption('backupAssets', NULL, InputOption::VALUE_NONE, 'Create Assets backup.')
-            ->addOption('backupAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
-            ->addOption('assetSources', NULL, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
+            ->addOption('backupSQL', null, InputOption::VALUE_NONE, 'Create SQL backup.')
+            ->addOption('backupSQLFilename', null, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
+            ->addOption('backupAssets', null, InputOption::VALUE_NONE, 'Create Assets backup.')
+            ->addOption('backupAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
+            ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
         ;
     }
 
@@ -42,7 +43,8 @@ class BackupCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
         if ($input->getOption('backupSQL')) {
             $this->createSQLBackup($input, $output);
         }
@@ -60,7 +62,8 @@ class BackupCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function createSQLBackup(InputInterface $input, OutputInterface $output) {
+    protected function createSQLBackup(InputInterface $input, OutputInterface $output)
+    {
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
 
@@ -73,8 +76,10 @@ class BackupCommand extends ContainerAwareCommand {
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
-        $command = sprintf('mysqldump -h %s -u %s -p\'%s\' %s | gzip - > %s',
-            $dbHost, $dbUser, $dbPassword, $dbName, $outputFile);
+        $command = sprintf(
+            'mysqldump -h %s -u %s -p\'%s\' %s | gzip - > %s',
+            $dbHost, $dbUser, $dbPassword, $dbName, $outputFile
+        );
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
@@ -96,7 +101,8 @@ class BackupCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function createAssetsBackup(InputInterface $input, OutputInterface $output) {
+    protected function createAssetsBackup(InputInterface $input, OutputInterface $output)
+    {
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
 
@@ -110,8 +116,7 @@ class BackupCommand extends ContainerAwareCommand {
             $assetSources = '*';
         }
 
-        $command = sprintf('tar -czf %s %s',
-            $outputFile, $assetSources);
+        $command = sprintf('tar -czf %s %s', $outputFile, $assetSources);
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
@@ -131,7 +136,8 @@ class BackupCommand extends ContainerAwareCommand {
      * @param string $targetDirectory
      * @throws \RuntimeException
      */
-    protected function checkTargetDirectory($targetDirectory) {
+    protected function checkTargetDirectory($targetDirectory)
+    {
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
 
