@@ -116,7 +116,8 @@ class BackupCommand extends ContainerAwareCommand
             $assetSources = '*';
         }
 
-        $command = sprintf('tar -czf %s %s', $outputFile, $assetSources);
+        $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . '/..');
+        $command = sprintf('cd %s && tar -czf %s %s', $rootDir, $outputFile, $assetSources);
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
