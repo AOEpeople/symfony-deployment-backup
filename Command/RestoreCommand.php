@@ -110,7 +110,7 @@ class RestoreCommand extends ContainerAwareCommand {
         $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreAssetsFilename');
         $this->checkBackupFile($backupFile);
 
-        $command = sprintf('tar -xzf %f', $backupFile);
+        $command = sprintf('tar -xzf %s', $backupFile);
         $process = new Process($command);
         $process->run();
 
