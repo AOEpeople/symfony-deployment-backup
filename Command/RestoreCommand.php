@@ -31,6 +31,7 @@ class RestoreCommand extends ContainerAwareCommand {
             ->addOption('restoreSQLDropAndCreate', NULL, InputOption::VALUE_NONE, 'Perform Drop and Create on Database before Restore is performed.')
             ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
+            ->addOption('restoreUnlinkBefore', NULL, InputOption::VALUE_NONE, 'Have tar unlink existing resources first.')
             ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
         ;
     }
@@ -106,11 +107,24 @@ class RestoreCommand extends ContainerAwareCommand {
      * @throws \RuntimeException
      */
     protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
+        // Possible Tar Options
+        $options = array();
+
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreAssetsFilename');
         $this->checkBackupFile($backupFile);
 
-        $command = sprintf('tar --overwrite -xzf %s', $backupFile);
+        $unlink = $input->getOption('restoreUnlinkBefore');
+
+        array_push($options, '--overwrite');
+        if ($unlink) {
+            array_push($options, '--unlink-first');
+            array_push($options, '--recursive-unlink');
+        }
+
+        $command = sprintf('tar %s -xzf %s ', implode(' ', $options), $backupFile);
+        $output->writeln($command);
+
         $process = new Process($command);
         $process->run();
 

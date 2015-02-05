@@ -29,6 +29,7 @@ class BackupCommand extends ContainerAwareCommand
             ->addOption('backupSQL', null, InputOption::VALUE_NONE, 'Create SQL backup.')
             ->addOption('backupSQLFilename', null, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('backupAssets', null, InputOption::VALUE_NONE, 'Create Assets backup.')
+            ->addOption('backupDereferenceSymlinks', null, InputOption::VALUE_NONE, 'Dereference Symlinks.')
             ->addOption('backupAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
             ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
         ;
@@ -103,6 +104,9 @@ class BackupCommand extends ContainerAwareCommand
      */
     protected function createAssetsBackup(InputInterface $input, OutputInterface $output)
     {
+        // Possible Tar Options
+        $options = array();
+
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
 
@@ -111,13 +115,18 @@ class BackupCommand extends ContainerAwareCommand
 
         $outputFile = $targetDirectory . DIRECTORY_SEPARATOR . $input->getOption('backupAssetsFilename');
         $assetSources = trim(str_replace(',', ' ', $input->getOption('assetSources')));
+        $dereference = $input->getOption('backupDereferenceSymlinks');
 
         if (!$assetSources) {
             $assetSources = '*';
         }
 
+        if ($dereference) {
+            array_push($options, '--dereference');
+        }
+
         $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . '/..');
-        $command = sprintf('cd %s && tar -czf %s %s', $rootDir, $outputFile, $assetSources);
+        $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir,$outputFile, $assetSources, implode(' ', $options));
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
