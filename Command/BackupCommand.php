@@ -85,6 +85,7 @@ class BackupCommand extends ContainerAwareCommand
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
         $process = new Process($command);
+        $process->setTimeout(3600);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -131,6 +132,7 @@ class BackupCommand extends ContainerAwareCommand
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
         $process = new Process($command);
+        $process->setTimeout(3600);
         $process->run();
 
         if (!$process->isSuccessful()) {

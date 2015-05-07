@@ -79,12 +79,14 @@ class RestoreCommand extends ContainerAwareCommand {
         }
 
         $process = new Process($command);
+        $process->setTimeout(3600);
         $process->run();
 
         $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
             $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
 
         $process = new Process($command);
+        $process->setTimeout(3600);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -126,6 +128,7 @@ class RestoreCommand extends ContainerAwareCommand {
         $output->writeln($command);
 
         $process = new Process($command);
+        $process->setTimeout(3600);
         $process->run();
 
         if (!$process->isSuccessful()) {
