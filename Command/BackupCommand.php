@@ -105,7 +105,7 @@ class BackupCommand extends ContainerAwareCommand
     protected function createAssetsBackup(InputInterface $input, OutputInterface $output)
     {
         // Possible Tar Options
-        $options = array();
+        $options = [];
 
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
@@ -122,11 +122,11 @@ class BackupCommand extends ContainerAwareCommand
         }
 
         if ($dereference) {
-            array_push($options, '--dereference');
+            $options[] = '--dereference';
         }
 
         $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . '/..');
-        $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir,$outputFile, $assetSources, implode(' ', $options));
+        $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir, $outputFile, implode(' ', $options), $assetSources);
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
 
