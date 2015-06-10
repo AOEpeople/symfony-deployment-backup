@@ -32,6 +32,7 @@ class RestoreCommand extends ContainerAwareCommand {
             ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
             ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
             ->addOption('restoreUnlinkBefore', NULL, InputOption::VALUE_NONE, 'Have tar unlink existing resources first.')
+            ->addOption('changeToDir', NULL, InputOption::VALUE_OPTIONAL, 'Restore in desired directory')
             ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
         ;
     }
@@ -109,19 +110,25 @@ class RestoreCommand extends ContainerAwareCommand {
      * @throws \RuntimeException
      */
     protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
-        // Possible Tar Options
-        $options = array();
 
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreAssetsFilename');
         $this->checkBackupFile($backupFile);
 
-        $unlink = $input->getOption('restoreUnlinkBefore');
 
-        array_push($options, '--overwrite');
+        $options = [];
+        $options[] = '--overwrite';
+
+        $unlink = $input->getOption('restoreUnlinkBefore');
         if ($unlink) {
-            array_push($options, '--unlink-first');
-            array_push($options, '--recursive-unlink');
+            $options[] = '--unlink-first';
+            $options[] = '--recursive-unlink';
+        }
+
+        $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . DIRECTORY_SEPARATOR . '..');
+        $changeToDir = $input->getOption('changeToDir');
+        if ($changeToDir) {
+            $options[] = sprintf('--directory %s', $rootDir . DIRECTORY_SEPARATOR . $changeToDir);
         }
 
         $command = sprintf('tar %s -xzf %s ', implode(' ', $options), $backupFile);

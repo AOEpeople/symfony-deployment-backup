@@ -31,8 +31,8 @@ class BackupCommand extends ContainerAwareCommand
             ->addOption('backupAssets', null, InputOption::VALUE_NONE, 'Create Assets backup.')
             ->addOption('backupDereferenceSymlinks', null, InputOption::VALUE_NONE, 'Dereference Symlinks.')
             ->addOption('backupAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
-            ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
-        ;
+            ->addOption('changeToDir', null, InputOption::VALUE_OPTIONAL, 'Backup inside desired directory')
+            ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.');
     }
 
 
@@ -116,17 +116,22 @@ class BackupCommand extends ContainerAwareCommand
 
         $outputFile = $targetDirectory . DIRECTORY_SEPARATOR . $input->getOption('backupAssetsFilename');
         $assetSources = trim(str_replace(',', ' ', $input->getOption('assetSources')));
-        $dereference = $input->getOption('backupDereferenceSymlinks');
 
         if (!$assetSources) {
-            $assetSources = '*';
+            $assetSources = '.';
         }
 
+        $dereference = $input->getOption('backupDereferenceSymlinks');
         if ($dereference) {
             $options[] = '--dereference';
         }
 
-        $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . '/..');
+        $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . DIRECTORY_SEPARATOR . '..');
+        $changeToDir = $input->getOption('changeToDir');
+        if ($changeToDir) {
+            $options[] = sprintf('--directory %s', $rootDir . DIRECTORY_SEPARATOR . $changeToDir);
+        }
+
         $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir, $outputFile, implode(' ', $options), $assetSources);
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
