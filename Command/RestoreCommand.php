@@ -15,26 +15,26 @@ use Symfony\Component\Translation\Translator;
  * Class RestoreCommand
  * @package Aoe\Deployment\SystemStorageBackupBundle\Command
  */
-class RestoreCommand extends ContainerAwareCommand {
-
+class RestoreCommand extends ContainerAwareCommand
+{
     /**
      * Command configuration
      *
      * @return void
      */
-    protected function configure() {
+    protected function configure()
+    {
         $this
             ->setName('aoedeployment:restorebackup')
             ->setDescription('Restores SQL/ZIP backup files to database and asset folders.')
             ->addArgument('backupDirectory', InputArgument::REQUIRED, 'The directory of the backup files.')
-            ->addOption('restoreSQL', NULL, InputOption::VALUE_NONE, 'Restore SQL backup file to database.')
-            ->addOption('restoreSQLDropAndCreate', NULL, InputOption::VALUE_NONE, 'Perform Drop and Create on Database before Restore is performed.')
-            ->addOption('restoreSQLFilename', NULL, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
-            ->addOption('restoreAssets', NULL, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
-            ->addOption('restoreUnlinkBefore', NULL, InputOption::VALUE_NONE, 'Have tar unlink existing resources first.')
-            ->addOption('changeToDir', NULL, InputOption::VALUE_OPTIONAL, 'Restore in desired directory')
-            ->addOption('restoreAssetsFilename', NULL, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
-        ;
+            ->addOption('restoreSQL', null, InputOption::VALUE_NONE, 'Restore SQL backup file to database.')
+            ->addOption('restoreSQLDropAndCreate', null, InputOption::VALUE_NONE, 'Perform Drop and Create on Database before Restore is performed.')
+            ->addOption('restoreSQLFilename', null, InputOption::VALUE_OPTIONAL, 'SQL backup filename.', 'database.sql.gz')
+            ->addOption('restoreAssets', null, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
+            ->addOption('restoreUnlinkBefore', null, InputOption::VALUE_NONE, 'Have tar unlink existing resources first.')
+            ->addOption('changeToDir', null, InputOption::VALUE_OPTIONAL, 'Restore in desired directory')
+            ->addOption('restoreAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz');
     }
 
     /**
@@ -45,7 +45,8 @@ class RestoreCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
         if ($input->getOption('restoreSQL')) {
             $this->restoreSQLBackup($input, $output);
         }
@@ -63,7 +64,8 @@ class RestoreCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function restoreSQLBackup(InputInterface $input, OutputInterface $output) {
+    protected function restoreSQLBackup(InputInterface $input, OutputInterface $output)
+    {
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreSQLFilename');
         $this->checkBackupFile($backupFile);
@@ -75,16 +77,14 @@ class RestoreCommand extends ContainerAwareCommand {
 
         $command='';
         if ($input->getOption('restoreSQLDropAndCreate')) {
-            $command = sprintf('mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"',
-                $dbHost, $dbUser, $dbPassword, $dbName, $dbName);
+            $command = sprintf('mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"', $dbHost, $dbUser, $dbPassword, $dbName, $dbName);
         }
 
         $process = new Process($command);
         $process->setTimeout(3600);
         $process->run();
 
-        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
-            $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
+        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s', $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
 
         $process = new Process($command);
         $process->setTimeout(3600);
@@ -96,9 +96,12 @@ class RestoreCommand extends ContainerAwareCommand {
 
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
-        $output->writeln($translator->trans(
-            'sql backup restored from %backupFile%',
-            array('%backupFile%' => $backupFile)));
+        $output->writeln(
+            $translator->trans(
+                'sql backup restored from %backupFile%',
+                array('%backupFile%' => $backupFile)
+            )
+        );
     }
 
     /**
@@ -109,8 +112,8 @@ class RestoreCommand extends ContainerAwareCommand {
      * @return void
      * @throws \RuntimeException
      */
-    protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output) {
-
+    protected function restoreAssetsBackup(InputInterface $input, OutputInterface $output)
+    {
         $backupDirectory = $input->getArgument('backupDirectory');
         $backupFile = $backupDirectory . DIRECTORY_SEPARATOR . $input->getOption('restoreAssetsFilename');
         $this->checkBackupFile($backupFile);
@@ -128,7 +131,17 @@ class RestoreCommand extends ContainerAwareCommand {
         $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . DIRECTORY_SEPARATOR . '..');
         $changeToDir = $input->getOption('changeToDir');
         if ($changeToDir) {
-            $options[] = sprintf('--directory %s', $rootDir . DIRECTORY_SEPARATOR . $changeToDir);
+            $directory = $rootDir . DIRECTORY_SEPARATOR . $changeToDir;
+            try {
+                $this->verfifyDir($directory, $output);
+                $options[] = sprintf('--directory %s', $directory);
+            } catch (\Exception $e) {
+                $output->writeln(
+                    $translator->trans(
+                        $e->getMessage()
+                    )
+                );
+            }
         }
 
         $command = sprintf('tar %s -xzf %s ', implode(' ', $options), $backupFile);
@@ -144,9 +157,12 @@ class RestoreCommand extends ContainerAwareCommand {
 
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
-        $output->writeln($translator->trans(
-            'assets backup restored from %backupFile%',
-            array('%backupFile%' => $backupFile)));
+        $output->writeln(
+            $translator->trans(
+                'assets backup restored from %backupFile%',
+                array('%backupFile%' => $backupFile)
+            )
+        );
     }
 
     /**
@@ -155,7 +171,8 @@ class RestoreCommand extends ContainerAwareCommand {
      * @param $backupFile string
      * @throws \RuntimeException
      */
-    protected function checkBackupFile($backupFile) {
+    protected function checkBackupFile($backupFile)
+    {
         /* @var $translator Translator */
         $translator = $this->getContainer()->get('translator');
 
@@ -164,9 +181,35 @@ class RestoreCommand extends ContainerAwareCommand {
             throw new \RuntimeException(
                 $translator->trans(
                     'backup file %backupFile% does not exist',
-                    array('%backupFile%' => $backupFile)));
+                    array('%backupFile%' => $backupFile)
+                )
+            );
         }
-
     }
 
+    /**
+     * Check if Directory exists and create if its missing
+     *
+     * @param string $directory
+     * @throws \RuntimeException
+     */
+    protected function verfifyDir($directory, OutputInterface $output)
+    {
+        if (!file_exists($directory) && !is_dir($directory)) {
+            if (!mkdir($directory)) {
+                throw new \RuntimeException(sprintf('Could not create directory: %s', $directory));
+            } else {
+                /* @var $translator Translator */
+                $translator = $this->getContainer()->get('translator');
+                $output->writeln(
+                    $translator->trans(
+                        sprintf(
+                            "Directory '%s' was missing, created it.",
+                            $directory
+                        )
+                    )
+                );
+            }
+        }
+    }
 }
