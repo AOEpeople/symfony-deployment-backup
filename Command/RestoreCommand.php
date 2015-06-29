@@ -128,6 +128,9 @@ class RestoreCommand extends ContainerAwareCommand
             $options[] = '--recursive-unlink';
         }
 
+        /* @var $translator Translator */
+        $translator = $this->getContainer()->get('translator');
+
         $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . DIRECTORY_SEPARATOR . '..');
         $changeToDir = $input->getOption('changeToDir');
         if ($changeToDir) {
@@ -155,8 +158,6 @@ class RestoreCommand extends ContainerAwareCommand
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
         $output->writeln(
             $translator->trans(
                 'assets backup restored from %backupFile%',
