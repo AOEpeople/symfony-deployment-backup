@@ -32,7 +32,8 @@ class BackupCommand extends ContainerAwareCommand
             ->addOption('backupDereferenceSymlinks', null, InputOption::VALUE_NONE, 'Dereference Symlinks.')
             ->addOption('backupAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
             ->addOption('changeToDir', null, InputOption::VALUE_OPTIONAL, 'Backup inside desired directory')
-            ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.');
+            ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
+            ->addOption('ignoreTables', null, InputOption::VALUE_OPTIONAL, 'Comma separated list of tables to ignore.');
     }
 
 
@@ -77,9 +78,19 @@ class BackupCommand extends ContainerAwareCommand
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
+        $ignoreTables = $input->getOption('ignoreTables');
+        $ignoreTablesString = '';
+        if (!empty($ignoreTables)) {
+            $ignoreTablesArray = explode(',', $ignoreTables);
+            foreach ($ignoreTablesArray as $tableToIgnore) {
+                $ignoreTablesString .= " --ignore-table=$dbName.$tableToIgnore";
+            }
+            $ignoreTablesString = ltrim($ignoreTablesString);
+        }
+
         $command = sprintf(
-            'mysqldump -h %s -u %s -p\'%s\' %s | gzip - > %s',
-            $dbHost, $dbUser, $dbPassword, $dbName, $outputFile
+            'mysqldump -h %s -u %s -p\'%s\' %s %s | gzip - > %s',
+            $dbHost, $dbUser, $dbPassword, $dbName, $ignoreTablesString, $outputFile
         );
 
         $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
