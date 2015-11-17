@@ -8,7 +8,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Translation\Translator;
 
 /**
  * Class BackupCommand
@@ -66,9 +65,6 @@ class BackupCommand extends ContainerAwareCommand
      */
     protected function createSQLBackup(InputInterface $input, OutputInterface $output)
     {
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
-
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
 
@@ -93,7 +89,7 @@ class BackupCommand extends ContainerAwareCommand
             $dbHost, $dbUser, $dbPassword, $dbName, $ignoreTablesString, $outputFile
         );
 
-        $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
+        $output->writeln("running cmd: $command");
 
         $process = new Process($command);
         $process->setTimeout(3600);
@@ -103,7 +99,7 @@ class BackupCommand extends ContainerAwareCommand
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        $output->writeln($translator->trans('sql backup created: %outputFile%', array('%outputFile%' => $outputFile)));
+        $output->writeln("sql backup created: $outputFile");
     }
 
     /**
@@ -118,9 +114,6 @@ class BackupCommand extends ContainerAwareCommand
     {
         // Possible Tar Options
         $options = [];
-
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
 
         $targetDirectory = $input->getArgument('targetDirectory');
         $this->checkTargetDirectory($targetDirectory);
@@ -145,7 +138,7 @@ class BackupCommand extends ContainerAwareCommand
 
         $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir, $outputFile, implode(' ', $options), $assetSources);
 
-        $output->writeln($translator->trans('running cmd: %command%', array('%command%' => $command)));
+        $output->writeln("running cmd: $command");
 
         $process = new Process($command);
         $process->setTimeout(3600);
@@ -155,7 +148,7 @@ class BackupCommand extends ContainerAwareCommand
             throw new \RuntimeException($process->getErrorOutput());
         }
 
-        $output->writeln($translator->trans('asset backup created: %outputFile%', array('%outputFile%' => $outputFile)));
+        $output->writeln("asset backup created: $outputFile");
     }
 
     /**
@@ -166,18 +159,9 @@ class BackupCommand extends ContainerAwareCommand
      */
     protected function checkTargetDirectory($targetDirectory)
     {
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
-
         $fileSystem = new Filesystem();
         if (!$fileSystem->exists($targetDirectory)) {
-            throw new \RuntimeException(
-                $translator->trans(
-                    'target directory %targetDirectory% does not exist.',
-                    array(
-                        '%targetDirectory%' => $targetDirectory
-                    )
-                ));
+            throw new \RuntimeException("target directory $targetDirectory does not exist.");
         }
     }
 
