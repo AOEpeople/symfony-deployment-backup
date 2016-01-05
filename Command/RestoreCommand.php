@@ -9,7 +9,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Translation\Translator;
 
 /**
  * Class RestoreCommand
@@ -34,14 +33,15 @@ class RestoreCommand extends ContainerAwareCommand
             ->addOption('restoreAssets', null, InputOption::VALUE_NONE, 'Restore assets backup file to the current working directory.')
             ->addOption('restoreUnlinkBefore', null, InputOption::VALUE_NONE, 'Have tar unlink existing resources first.')
             ->addOption('changeToDir', null, InputOption::VALUE_OPTIONAL, 'Restore in desired directory')
-            ->addOption('restoreAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz');
+            ->addOption('restoreAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
+            ->addOption('timeout', null, InputOption::VALUE_OPTIONAL, 'Optional restore process timeout (in seconds).');
     }
 
     /**
      * Execute the console command
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -59,8 +59,8 @@ class RestoreCommand extends ContainerAwareCommand
     /**
      * Restore sql backup to database
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -75,40 +75,37 @@ class RestoreCommand extends ContainerAwareCommand
         $dbUser = $this->getContainer()->getParameter('database_user');
         $dbPassword = $this->getContainer()->getParameter('database_password');
 
-        $command='';
         if ($input->getOption('restoreSQLDropAndCreate')) {
-            $command = sprintf('mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"', $dbHost, $dbUser, $dbPassword, $dbName, $dbName);
+            $command = sprintf(
+                'mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"',
+                $dbHost,
+                $dbUser,
+                $dbPassword,
+                $dbName,
+                $dbName
+            );
+            $this->runCommand($command, $input, $output);
         }
 
-        $process = new Process($command);
-        $process->setTimeout(3600);
-        $process->run();
-
-        $command = sprintf('gunzip < %s | mysql -h %s -u %s -p\'%s\' %s', $backupFile, $dbHost, $dbUser, $dbPassword, $dbName);
-
-        $process = new Process($command);
-        $process->setTimeout(3600);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        }
-
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
-        $output->writeln(
-            $translator->trans(
-                'sql backup restored from %backupFile%',
-                array('%backupFile%' => $backupFile)
-            )
+        $command = sprintf(
+            'gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
+            $backupFile,
+            $dbHost,
+            $dbUser,
+            $dbPassword,
+            $dbName
         );
+
+        $this->runCommand($command, $input, $output);
+
+        $output->writeln("sql backup restored from $backupFile");
     }
 
     /**
      * Restore assets backup to target folder
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -128,9 +125,6 @@ class RestoreCommand extends ContainerAwareCommand
             $options[] = '--recursive-unlink';
         }
 
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
-
         $rootDir = realpath($this->getApplication()->getKernel()->getRootDir() . DIRECTORY_SEPARATOR . '..');
         $changeToDir = $input->getOption('changeToDir');
         if ($changeToDir) {
@@ -139,59 +133,38 @@ class RestoreCommand extends ContainerAwareCommand
                 $this->verfifyDir($directory, $output);
                 $options[] = sprintf('--directory %s', $directory);
             } catch (\Exception $e) {
-                $output->writeln(
-                    $translator->trans(
-                        $e->getMessage()
-                    )
-                );
+                $output->writeln($e->getMessage());
             }
         }
 
         $command = sprintf('tar %s -xzf %s ', implode(' ', $options), $backupFile);
-        $output->writeln($command);
 
-        $process = new Process($command);
-        $process->setTimeout(3600);
-        $process->run();
+        $this->runCommand($command, $input, $output);
 
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        }
-
-        $output->writeln(
-            $translator->trans(
-                'assets backup restored from %backupFile%',
-                array('%backupFile%' => $backupFile)
-            )
-        );
+        $output->writeln("assets backup restored from $backupFile");
     }
 
     /**
      * Check if $backupFile exists
      *
-     * @param $backupFile string
+     * @param string $backupFile Backup file
+     * @return void
      * @throws \RuntimeException
      */
     protected function checkBackupFile($backupFile)
     {
-        /* @var $translator Translator */
-        $translator = $this->getContainer()->get('translator');
-
         $fileSystem = new Filesystem();
         if (!$fileSystem->exists($backupFile)) {
-            throw new \RuntimeException(
-                $translator->trans(
-                    'backup file %backupFile% does not exist',
-                    array('%backupFile%' => $backupFile)
-                )
-            );
+            throw new \RuntimeException("backup file $backupFile does not exist");
         }
     }
 
     /**
      * Check if Directory exists and create if its missing
      *
-     * @param string $directory
+     * @param string          $directory Directory to verify
+     * @param OutputInterface $output    Output
+     * @return void
      * @throws \RuntimeException
      */
     protected function verfifyDir($directory, OutputInterface $output)
@@ -200,17 +173,56 @@ class RestoreCommand extends ContainerAwareCommand
             if (!mkdir($directory)) {
                 throw new \RuntimeException(sprintf('Could not create directory: %s', $directory));
             } else {
-                /* @var $translator Translator */
-                $translator = $this->getContainer()->get('translator');
-                $output->writeln(
-                    $translator->trans(
-                        sprintf(
-                            "Directory '%s' was missing, created it.",
-                            $directory
-                        )
-                    )
-                );
+                $output->writeln("Directory $directory was missing, created it.");
             }
         }
+    }
+
+    /**
+     * @param string          $command Command to run
+     * @param InputInterface  $input   Input
+     * @param OutputInterface $output  Output
+     * @return void
+     * @throws \RuntimeException
+     */
+    protected function runCommand($command, InputInterface $input, OutputInterface $output)
+    {
+        $output->writeln('running command: ' . $command);
+
+        $timeout = $this->getTimeout($input);
+
+        $process = new Process($command);
+        $process->setTimeout($timeout);
+        $process->start();
+
+        while ($process->isRunning()) {
+            if ($timeout) {
+                $process->checkTimeout();
+            }
+
+            // sleep for 2 seconds and check again
+            usleep(2 * 1000 * 1000);
+        }
+
+        if (!$process->isSuccessful()) {
+            throw new \RuntimeException($process->getErrorOutput());
+        } else {
+            $output->writeln($process->getOutput());
+        }
+    }
+
+    /**
+     * @param InputInterface $input Input interface
+     * @return null|int
+     */
+    protected function getTimeout(InputInterface $input)
+    {
+        if (!$input->hasOption('timeout')) {
+            return null;
+        }
+
+        $result = (int) $input->getOption('timeout');
+
+        return $result ? null : $result;
     }
 }

@@ -20,7 +20,8 @@ class BackupCommand extends ContainerAwareCommand
      *
      * @return void
      */
-    protected function configure() {
+    protected function configure()
+    {
         $this
             ->setName('aoedeployment:createbackup')
             ->setDescription('Creates SQL/ZIP files as backup')
@@ -32,15 +33,17 @@ class BackupCommand extends ContainerAwareCommand
             ->addOption('backupAssetsFilename', null, InputOption::VALUE_OPTIONAL, 'Assets backup filename.', 'assets.tar.gz')
             ->addOption('changeToDir', null, InputOption::VALUE_OPTIONAL, 'Backup inside desired directory')
             ->addOption('assetSources', null, InputOption::VALUE_REQUIRED, 'Comma separated list of backup asset files/directories.')
-            ->addOption('ignoreTables', null, InputOption::VALUE_OPTIONAL, 'Comma separated list of tables to ignore.');
+            ->addOption('ignoreTables', null, InputOption::VALUE_OPTIONAL, 'Comma separated list of tables to ignore.')
+            ->addOption('timeout', null, InputOption::VALUE_OPTIONAL, 'Optional backup process timeout (in seconds).');
+
     }
 
 
     /**
      * Execute the console command
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -58,8 +61,8 @@ class BackupCommand extends ContainerAwareCommand
     /**
      * Create the sql backup
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -89,15 +92,7 @@ class BackupCommand extends ContainerAwareCommand
             $dbHost, $dbUser, $dbPassword, $dbName, $ignoreTablesString, $outputFile
         );
 
-        $output->writeln("running cmd: $command");
-
-        $process = new Process($command);
-        $process->setTimeout(3600);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        }
+        $this->runCommand($command, $input, $output);
 
         $output->writeln("sql backup created: $outputFile");
     }
@@ -105,8 +100,8 @@ class BackupCommand extends ContainerAwareCommand
     /**
      * Create the assets backups
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param InputInterface  $input  Input
+     * @param OutputInterface $output Output
      * @return void
      * @throws \RuntimeException
      */
@@ -138,15 +133,7 @@ class BackupCommand extends ContainerAwareCommand
 
         $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir, $outputFile, implode(' ', $options), $assetSources);
 
-        $output->writeln("running cmd: $command");
-
-        $process = new Process($command);
-        $process->setTimeout(3600);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        }
+        $this->runCommand($command, $input, $output);
 
         $output->writeln("asset backup created: $outputFile");
     }
@@ -154,7 +141,8 @@ class BackupCommand extends ContainerAwareCommand
     /**
      * Check if $targetDirectory exists
      *
-     * @param string $targetDirectory
+     * @param string $targetDirectory Target Directory
+     * @return void
      * @throws \RuntimeException
      */
     protected function checkTargetDirectory($targetDirectory)
@@ -165,4 +153,50 @@ class BackupCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * @param string          $command Command to run
+     * @param InputInterface  $input   Input
+     * @param OutputInterface $output  Output
+     * @return void
+     * @throws \RuntimeException
+     */
+    protected function runCommand($command, InputInterface $input, OutputInterface $output)
+    {
+        $output->writeln('running command: ' . $command);
+
+        $timeout = $this->getTimeout($input);
+
+        $process = new Process($command);
+        $process->setTimeout($timeout);
+        $process->start();
+        while ($process->isRunning()) {
+            if ($timeout) {
+                $process->checkTimeout();
+            }
+
+            // sleep for 2 seconds and check again
+            usleep(2 * 1000 * 1000);
+        }
+
+        if (!$process->isSuccessful()) {
+            throw new \RuntimeException($process->getErrorOutput());
+        } else {
+            $output->writeln($process->getOutput());
+        }
+    }
+
+    /**
+     * @param InputInterface $input Input interface
+     * @return null|int
+     */
+    protected function getTimeout(InputInterface $input)
+    {
+        if (!$input->hasOption('timeout')) {
+            return null;
+        }
+
+        $result = (int) $input->getOption('timeout');
+
+        return $result ? null : $result;
+    }
 }
