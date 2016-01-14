@@ -77,10 +77,10 @@ class RestoreCommand extends ContainerAwareCommand
 
         if ($input->getOption('restoreSQLDropAndCreate')) {
             $command = sprintf(
-                'mysql -h %s -u %s -p\'%s\' -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"',
-                $dbHost,
-                $dbUser,
-                $dbPassword,
+                'mysql -h %s -u %s -p%s -e "DROP DATABASE IF EXISTS %s; CREATE DATABASE %s;"',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                escapeshellarg($dbPassword),
                 $dbName,
                 $dbName
             );
@@ -88,12 +88,12 @@ class RestoreCommand extends ContainerAwareCommand
         }
 
         $command = sprintf(
-            'gunzip < %s | mysql -h %s -u %s -p\'%s\' %s',
-            $backupFile,
-            $dbHost,
-            $dbUser,
-            $dbPassword,
-            $dbName
+            'gunzip < %s | mysql -h %s -u %s -p%s %s',
+            escapeshellarg($backupFile),
+            escapeshellarg($dbHost),
+            escapeshellarg($dbUser),
+            escapeshellarg($dbPassword),
+            escapeshellarg($dbName)
         );
 
         $this->runCommand($command, $input, $output);
