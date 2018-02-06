@@ -1,7 +1,6 @@
 <?php
 namespace Aoe\Deployment\SystemStorageBackupBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -12,7 +11,7 @@ use Symfony\Component\Process\Process;
 /**
  * Class BackupCommand
  */
-class BackupCommand extends ContainerAwareCommand
+class BackupCommand extends AbstractCommand
 {
 
     /**
@@ -88,13 +87,18 @@ class BackupCommand extends ContainerAwareCommand
         }
 
         $command = sprintf(
-            'mysqldump -h %s -u %s -p\'%s\' %s %s | gzip - > %s',
-            $dbHost, $dbUser, $dbPassword, $dbName, $ignoreTablesString, $outputFile
+            'mysqldump -h %s -u %s -p %s %s %s | gzip - > %s',
+            escapeshellarg($dbHost),
+            escapeshellarg($dbUser),
+            escapeshellarg($dbPassword),
+            escapeshellarg($dbName),
+            escapeshellarg($ignoreTablesString),
+            escapeshellarg($outputFile)
         );
 
         $this->runCommand($command, $input, $output);
 
-        $output->writeln("sql backup created: $outputFile");
+        $output->writeln("<info>sql backup created: $outputFile</info>");
     }
 
     /**
@@ -131,11 +135,17 @@ class BackupCommand extends ContainerAwareCommand
             $options[] = sprintf('--directory %s', $rootDir . DIRECTORY_SEPARATOR . $changeToDir);
         }
 
-        $command = sprintf('cd %s && tar -czf %s %s %s', $rootDir, $outputFile, implode(' ', $options), $assetSources);
+        $command = sprintf(
+            'cd %s && tar -czf %s %s %s',
+            escapeshellarg($rootDir),
+            escapeshellarg($outputFile),
+            implode(' ', $options),
+            $assetSources
+        );
 
         $this->runCommand($command, $input, $output);
 
-        $output->writeln("asset backup created: $outputFile");
+        $output->writeln("<info>asset backup created: $outputFile</info>");
     }
 
     /**
@@ -162,7 +172,7 @@ class BackupCommand extends ContainerAwareCommand
      */
     protected function runCommand($command, InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('running command: ' . $command);
+        $output->writeln('<comment>running command: ' . $command . '</comment>');
 
         $timeout = $this->getTimeout($input);
 

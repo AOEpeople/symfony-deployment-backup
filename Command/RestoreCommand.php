@@ -2,19 +2,17 @@
 namespace Aoe\Deployment\SystemStorageBackupBundle\Command;
 
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Process\Process;
 
 /**
  * Class RestoreCommand
  * @package Aoe\Deployment\SystemStorageBackupBundle\Command
  */
-class RestoreCommand extends ContainerAwareCommand
+class RestoreCommand extends AbstractCommand
 {
     /**
      * Command configuration
@@ -98,7 +96,7 @@ class RestoreCommand extends ContainerAwareCommand
 
         $this->runCommand($command, $input, $output);
 
-        $output->writeln("sql backup restored from $backupFile");
+        $output->writeln("<info>sql backup restored from $backupFile</info>");
     }
 
     /**
@@ -133,7 +131,7 @@ class RestoreCommand extends ContainerAwareCommand
                 $this->verfifyDir($directory, $output);
                 $options[] = sprintf('--directory %s', $directory);
             } catch (\Exception $e) {
-                $output->writeln($e->getMessage());
+                $output->writeln('<error>' . $e->getMessage() . '</error>');
             }
         }
 
@@ -141,7 +139,7 @@ class RestoreCommand extends ContainerAwareCommand
 
         $this->runCommand($command, $input, $output);
 
-        $output->writeln("assets backup restored from $backupFile");
+        $output->writeln("<info>assets backup restored from $backupFile</info>");
     }
 
     /**
@@ -176,53 +174,5 @@ class RestoreCommand extends ContainerAwareCommand
                 $output->writeln("Directory $directory was missing, created it.");
             }
         }
-    }
-
-    /**
-     * @param string          $command Command to run
-     * @param InputInterface  $input   Input
-     * @param OutputInterface $output  Output
-     * @return void
-     * @throws \RuntimeException
-     */
-    protected function runCommand($command, InputInterface $input, OutputInterface $output)
-    {
-        $output->writeln('running command: ' . $command);
-
-        $timeout = $this->getTimeout($input);
-
-        $process = new Process($command);
-        $process->setTimeout($timeout);
-        $process->start();
-
-        while ($process->isRunning()) {
-            if ($timeout) {
-                $process->checkTimeout();
-            }
-
-            // sleep for 2 seconds and check again
-            usleep(2 * 1000 * 1000);
-        }
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        } else {
-            $output->writeln($process->getOutput());
-        }
-    }
-
-    /**
-     * @param InputInterface $input Input interface
-     * @return null|int
-     */
-    protected function getTimeout(InputInterface $input)
-    {
-        if (!$input->hasOption('timeout')) {
-            return null;
-        }
-
-        $result = (int) $input->getOption('timeout');
-
-        return $result ? null : $result;
     }
 }
