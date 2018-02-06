@@ -49,10 +49,12 @@ class BackupCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if ($input->getOption('backupSQL')) {
+            $output->writeln('<info>Backup Database</info>');
             $this->createSQLBackup($input, $output);
         }
 
         if ($input->getOption('backupAssets')) {
+            $output->writeln('<info>Backup Assets</info>');
             $this->createAssetsBackup($input, $output);
         }
     }
@@ -87,7 +89,7 @@ class BackupCommand extends AbstractCommand
         }
 
         $command = sprintf(
-            'mysqldump -h %s -u %s -p %s %s %s | gzip - > %s',
+            'mysqldump -h %s -u %s -p%s %s %s | gzip - > %s',
             escapeshellarg($dbHost),
             escapeshellarg($dbUser),
             escapeshellarg($dbPassword),
@@ -161,52 +163,5 @@ class BackupCommand extends AbstractCommand
         if (!$fileSystem->exists($targetDirectory)) {
             throw new \RuntimeException("target directory $targetDirectory does not exist.");
         }
-    }
-
-    /**
-     * @param string          $command Command to run
-     * @param InputInterface  $input   Input
-     * @param OutputInterface $output  Output
-     * @return void
-     * @throws \RuntimeException
-     */
-    protected function runCommand($command, InputInterface $input, OutputInterface $output)
-    {
-        $output->writeln('<comment>running command: ' . $command . '</comment>');
-
-        $timeout = $this->getTimeout($input);
-
-        $process = new Process($command);
-        $process->setTimeout($timeout);
-        $process->start();
-        while ($process->isRunning()) {
-            if ($timeout) {
-                $process->checkTimeout();
-            }
-
-            // sleep for 2 seconds and check again
-            usleep(2 * 1000 * 1000);
-        }
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException($process->getErrorOutput());
-        } else {
-            $output->writeln($process->getOutput());
-        }
-    }
-
-    /**
-     * @param InputInterface $input Input interface
-     * @return null|int
-     */
-    protected function getTimeout(InputInterface $input)
-    {
-        if (!$input->hasOption('timeout')) {
-            return null;
-        }
-
-        $result = (int) $input->getOption('timeout');
-
-        return $result ? null : $result;
     }
 }

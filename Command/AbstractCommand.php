@@ -20,7 +20,7 @@ abstract class AbstractCommand extends ContainerAwareCommand
      */
     protected function runCommand($command, InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('<comment>running command: ' . $command . '</comment>');
+        $output->writeln('<comment>running command: ' . substr($command, 0, stripos($command, " ") ) . ' ...</comment>');
 
         $timeout = $this->getTimeout($input);
 
