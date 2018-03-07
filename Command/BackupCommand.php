@@ -94,7 +94,7 @@ class BackupCommand extends AbstractCommand
             escapeshellarg($dbUser),
             escapeshellarg($dbPassword),
             escapeshellarg($dbName),
-            escapeshellarg($ignoreTablesString),
+            (($ignoreTablesString) ? escapeshellarg($ignoreTablesString) : ''),
             escapeshellarg($outputFile)
         );
 
